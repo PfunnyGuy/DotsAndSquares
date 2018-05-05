@@ -10,7 +10,7 @@ from PyQt5.QtWidgets import ( QApplication )
 # Set up the pieces for game app.  It needs an app, the app
 # needs a widget, and the widget needs a layout
 myGameApp  = QApplication( sys.argv )
-myGame     = DotzNBoxes() #QWidget()
+myGame     = DotzNBoxes() 
 
 # Done building the game.  Let's play!
 myGame.show()
