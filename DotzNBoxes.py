@@ -10,6 +10,8 @@ from Parts import VLine
 from Parts import HLine
 from Parts import Box
 
+BOARD_SIZE = 2
+
 
 class DotzNBoxes( QWidget ):
   # Constructor
@@ -46,9 +48,69 @@ class DotzNBoxes( QWidget ):
     row0.addWidget( turnLabel )
 
     # add controls to the second row
-    gameBoard = QGroupBox( "" )
-    gameBoard.setFixedSize( 500, 500 )
-    row1.addWidget( gameBoard )
+    # First, create the board for the game
+    boardLayout = QVBoxLayout()
+    boardLayout.addStretch()
+    boardLayout.setSpacing( 0 )
+
+    boxes  = [[Box()   for r in range( BOARD_SIZE    )] for c in range( BOARD_SIZE    )]
+    hlines = [[HLine() for r in range( BOARD_SIZE    )] for c in range( BOARD_SIZE + 1)]
+    vlines = [[VLine() for r in range( BOARD_SIZE + 1)] for c in range( BOARD_SIZE    )]
+
+    for row in range( BOARD_SIZE ):
+      lineLayout = QHBoxLayout()
+      lineLayout.addStretch()
+      lineLayout.setSpacing( 0 )
+      boxLayout = QHBoxLayout()
+      boxLayout.addStretch()
+      boxLayout.setSpacing( 0 )
+      boardLayout.addLayout( lineLayout )
+      boardLayout.addLayout( boxLayout )
+
+      for column in range( BOARD_SIZE ):
+        lineLayout.addWidget( Dot() )
+        lineLayout.addWidget( hlines[row][column] )
+        boxLayout.addWidget( vlines[row][column] )
+        boxLayout.addWidget( boxes[row][column] )
+
+        hlines[row  ][column  ].wasClicked.connect( boxes[row][column].SetTopClicked )
+        hlines[row+1][column  ].wasClicked.connect( boxes[row][column].SetBottomClicked )
+        vlines[row  ][column  ].wasClicked.connect( boxes[row][column].SetLeftClicked )
+        vlines[row  ][column+1].wasClicked.connect( boxes[row][column].SetRightClicked )
+
+
+      lineLayout.addWidget( Dot() )
+      boxLayout.addWidget( vlines[row][BOARD_SIZE] )
+
+      lineLayout.addStretch()
+      boxLayout.addStretch()
+
+    # Add final lineLayout, to "Cap" the bottom of the boardLayout
+    lineLayout = QHBoxLayout()
+    lineLayout.addStretch()
+    lineLayout.setSpacing( 0 )
+    for column in range( BOARD_SIZE ):
+      lineLayout.addWidget( Dot() )
+      lineLayout.addWidget( hlines[BOARD_SIZE][column] )
+    lineLayout.addWidget( Dot() )
+    lineLayout.addStretch()
+    boardLayout.addLayout( lineLayout )
+
+    boardLayout.addStretch()
+
+
+
+
+
+
+
+
+
+    # Make a box around the game.
+    boardFrame = QGroupBox( "" )
+    boardFrame.setFixedSize( 500, 500 )
+    boardFrame.setLayout( boardLayout )
+    row1.addWidget( boardFrame )
 
     # the score will be in a column to the right of the
     # game board.  Create a box and add the score to
@@ -113,13 +175,6 @@ class DotzNBoxes( QWidget ):
     row2.addWidget( QPushButton( "New Game" ) )
     row2.addStretch()
     row2.addWidget( quitButton )
-
-    # TEST CODE - delete before final delivery.
-    row2.addWidget( Dot() )
-    row2.addWidget( VLine() )
-    row2.addWidget( HLine() )
-    row2.addWidget( Box() )
-    # END TEST CODE
 
   def HandleQuitButtonClick( self ):
     QApplication.quit()
