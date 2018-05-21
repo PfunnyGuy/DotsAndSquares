@@ -1,3 +1,5 @@
+from PyQt5.QtCore    import *
+from PyQt5.QtGui     import *
 from PyQt5.QtWidgets import ( QApplication,
                               QWidget,
                               QGroupBox,
@@ -10,10 +12,14 @@ from Parts import VLine
 from Parts import HLine
 from Parts import Box
 
-BOARD_SIZE = 2
+BOARD_SIZE = 5
+PLAYER_1 = "Blue"
+PLAYER_2 = "Red"
 
 
 class DotzNBoxes( QWidget ):
+  changeColor = pyqtSignal()
+
   # Constructor
   def __init__( self ):
     # DotzNBoxes is a QWidget, so I need to call the constructor for QWidget
@@ -27,9 +33,11 @@ class DotzNBoxes( QWidget ):
 
     self.setLayout( gameLayout )
     self.setWindowTitle( "Dotz - N - Boxes" )
-
     self.move( 300, 300 )      # Set the position of the window
-
+    self.playersTurn = PLAYER_1
+    self.P1score = 0
+    self.P2score = 0
+    self.scored = False
 
     # My game will have an overall layout of 3 rows to hold the
     # controls.  These are the rows:
@@ -43,9 +51,9 @@ class DotzNBoxes( QWidget ):
     gameLayout.addLayout( row2 )
 
     # add controls to the first row
-    turnLabel = QLabel( "Red Player: It's your turn!" )
-    turnLabel.setMaximumHeight( 25 )
-    row0.addWidget( turnLabel )
+    self.turnLabel = QLabel( PLAYER_1 + " Player: It's your turn!" )
+    self.turnLabel.setMaximumHeight( 25 )
+    row0.addWidget( self.turnLabel )
 
     # add controls to the second row
     # First, create the board for the game
@@ -78,9 +86,15 @@ class DotzNBoxes( QWidget ):
         vlines[row  ][column  ].wasClicked.connect( boxes[row][column].SetLeftClicked )
         vlines[row  ][column+1].wasClicked.connect( boxes[row][column].SetRightClicked )
 
+        hlines[row][column].changedColor.connect( self.ChangePlayerTurn )
+        vlines[row][column].changedColor.connect( self.ChangePlayerTurn )
+
+        boxes[row][column].completed.connect( self.SomeoneScored )
+        self.changeColor.connect( boxes[row][column].ChangeColor )
 
       lineLayout.addWidget( Dot() )
       boxLayout.addWidget( vlines[row][BOARD_SIZE] )
+      vlines[row][BOARD_SIZE].changedColor.connect( self.ChangePlayerTurn )
 
       lineLayout.addStretch()
       boxLayout.addStretch()
@@ -92,19 +106,13 @@ class DotzNBoxes( QWidget ):
     for column in range( BOARD_SIZE ):
       lineLayout.addWidget( Dot() )
       lineLayout.addWidget( hlines[BOARD_SIZE][column] )
+      hlines[BOARD_SIZE][column].changedColor.connect( self.ChangePlayerTurn )
+
     lineLayout.addWidget( Dot() )
     lineLayout.addStretch()
     boardLayout.addLayout( lineLayout )
 
     boardLayout.addStretch()
-
-
-
-
-
-
-
-
 
     # Make a box around the game.
     boardFrame = QGroupBox( "" )
@@ -116,55 +124,14 @@ class DotzNBoxes( QWidget ):
     # game board.  Create a box and add the score to
     # it.
     scorebox = QVBoxLayout()
+    self.scoreLabel1 = QLabel(PLAYER_1 + " : 0")
+    self.scoreLabel2 = QLabel( PLAYER_2 + " : 0" )
+
     row1.addLayout(scorebox)
 
     scorebox.addWidget( QLabel("Score") )
-    scorebox.addWidget( QLabel("Blue : 0") )
-    scorebox.addWidget( QLabel("Red  : 0") )
-
-    # TEST CODE - delete before final delivery.
-    vl1 = VLine()
-    vl2 = VLine()
-    hl1 = HLine()
-    hl2 = HLine()
-    b1  = Box()
-    r0  = QHBoxLayout()
-    r1  = QHBoxLayout()
-    r2  = QHBoxLayout()
-    bigL = QVBoxLayout()
-
-    r0.setSpacing( 0 )
-    r1.setSpacing( 0 )
-    r2.setSpacing( 0 )
-    bigL.setSpacing( 0 )
-
-    r0.addWidget( Dot() )
-    r0.addWidget( hl1 )
-    r0.addWidget( Dot() )
-    r0.addStretch()
-
-    r1.addWidget( vl1 )
-    r1.addWidget( b1 )
-    r1.addWidget( vl2 )
-    r1.addStretch()
-
-    r2.addWidget( Dot() )
-    r2.addWidget( hl2 )
-    r2.addWidget( Dot() )
-    r2.addStretch()
-
-    bigL.addLayout( r0 )
-    bigL.addLayout( r1 )
-    bigL.addLayout( r2 )
-    bigL.addStretch()
-
-    scorebox.addLayout( bigL )
-
-    hl1.wasClicked.connect( b1.SetTopClicked )
-    hl2.wasClicked.connect( b1.SetBottomClicked )
-    vl1.wasClicked.connect( b1.SetLeftClicked )
-    vl2.wasClicked.connect( b1.SetRightClicked )
-    # END TEST CODE
+    scorebox.addWidget( self.scoreLabel1 )
+    scorebox.addWidget( self.scoreLabel2 )
 
     scorebox.addStretch()
 
@@ -176,6 +143,27 @@ class DotzNBoxes( QWidget ):
     row2.addStretch()
     row2.addWidget( quitButton )
 
+
   def HandleQuitButtonClick( self ):
     QApplication.quit()
+
+  def ChangePlayerTurn( self ):
+    if( self.scored == True ):
+      self.scored = False
+    else:
+      if( self.playersTurn == PLAYER_1 ):
+        self.playersTurn = PLAYER_2
+      else:
+        self.playersTurn = PLAYER_1
+      self.turnLabel.setText( self.playersTurn + " Player: It's your turn!" )
+      self.changeColor.emit()
+
+  def SomeoneScored( self ):
+    self.scored = True
+    if( self.playersTurn == PLAYER_1 ):
+      self.P1score = self.P1score + 1
+      self.scoreLabel1.setText(PLAYER_1 + " : " + str( self.P1score ) )
+    else:
+      self.P2score = self.P2score + 1
+      self.scoreLabel2.setText( PLAYER_2 + " : " + str( self.P2score ) )
 

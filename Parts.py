@@ -8,11 +8,12 @@ class Dot( QLabel ):
   def __init__( self ):
     QLabel.__init__( self )
     self.setFixedSize( 5, 5 )
-    self.setStyleSheet( "QLabel{ background-color: red }" )
+    self.setStyleSheet( "QLabel{ background-color: black }" )
 
 
 class Line( QLabel ):
   wasClicked = pyqtSignal()
+  changedColor = pyqtSignal()
 
   # Constructor
   def __init__( self ):
@@ -29,9 +30,11 @@ class Line( QLabel ):
       self.setStyleSheet( "QLabel { background-color: white }" )
 
   def  mousePressEvent(self, event):
-    self.hasBeenClicked = True
-    self.wasClicked.emit()
-    self.setStyleSheet( "QLabel { background-color: black }" )
+    if ( self.hasBeenClicked == False ):
+      self.hasBeenClicked = True
+      self.wasClicked.emit()
+      self.changedColor.emit()
+      self.setStyleSheet( "QLabel { background-color: black }" )
 
 
 class HLine( Line ):
@@ -49,15 +52,18 @@ class VLine( Line ):
 
 
 class Box( QLabel ):
+  completed = pyqtSignal()
+
   # Constructor
   def __init__( self ):
     QLabel.__init__( self )
     self.setFixedSize( 20, 20 )
-    self.setStyleSheet( "QLabel{ background-color: yellow }" )
+    self.setStyleSheet( "QLabel{ background-color: white }" )
     self.topClicked    = False
     self.bottomClicked = False
     self.leftClicked   = False
     self.rightClicked  = False
+    self.colorIsBlue   = True
 
   def SetTopClicked( self ):
     self.topClicked = True
@@ -75,7 +81,17 @@ class Box( QLabel ):
     self.rightClicked  = True
     self.checkIfAllClicked()
 
+  def ChangeColor( self ):
+    if( self.colorIsBlue == True ):
+      self.colorIsBlue = False
+    else:
+      self.colorIsBlue = True
+
   def checkIfAllClicked( self ):
     if( self.rightClicked and self.leftClicked and self.topClicked and self.bottomClicked ):
-      self.setStyleSheet( "QLabel{ background-color: blue }" )
+      if( self.colorIsBlue ):
+        self.setStyleSheet( "QLabel{ background-color: blue }" )
+      else:
+        self.setStyleSheet( "QLabel{ background-color: red }" )
+      self.completed.emit()
 
